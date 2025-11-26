@@ -1,0 +1,138 @@
+Sales_db.sql 
+
+
+SALES_ANALYSIS_DB.PUBLIC.SALES_DB_PROJECTSALES_ANALYSIS_DB.PUBLIC.SALES_DB_PROJECTcreate database sales_analysis_db;
+
+use database sales_analysis_db;
+
+CREATE or replace TABLE Fact_Sales (
+  OrderNo Int,
+  Order_lineNo Int,
+  Productcode Varchar(50),
+  Customer_name Text,
+  Quantity_order Int,
+  Price_each Decimal,
+  Status Text,
+  Deal_size Text,
+  Postal_code Varchar(20),
+  Quantity_no Int,
+  Territory Varchar(50),
+  MSRP Int
+);
+
+CREATE or replace TABLE Dim_Date (
+  Order_date Date primary key ,
+  Month_id Int,
+  Year_id Int,
+  QTR_id Int
+);
+
+CREATE or replace TABLE Dim_Products (
+  Product_code Varchar(50),
+  Product_line Text,
+  MSRP Int,
+  Quantity_order Int,
+  Quantity_no Int
+);
+
+CREATE or replace TABLE Dim_customer (
+  Customer_name Varchar,
+  Contact_first_name Text,
+  Contact_last_name Text,
+  Phone Int,
+  Address_line1 Varchar,
+  City Text,
+  State Text,
+  Country Text,
+  Postal_code Varchar,
+  Address_line2 Varchar
+);
+
+select * from fact_sales;
+
+select * from dim_date;
+
+select * from dim_customer;
+
+select * from dim_products ;
+
+list @sales_db_project ;
+
+create or replace table dim_date as
+select distinct 
+Order_date, 
+Year_id,
+month_id,
+QTR_id from raw_sales_data where Order_date is not null ;
+
+select * from dim_date ; 
+
+create or replace table dim_customer as 
+select distinct
+    CUSTOMER_NAME,
+    PHONE,
+    ADDRESS_LINE1,
+    ADDRESS_LINE2,
+    CITY,
+    STATE,
+    POSTAL_CODE,
+    COUNTRY,
+    CONTACT_LAST_NAME,
+    CONTACT_FIRST_NAME
+FROM raw_sales_data;
+
+select * from dim_customer ; 
+
+create or replace table dim_products as 
+select distinct 
+ PRODUCT_CODE,
+    PRODUCT_LINE,
+    MSRP,
+    DEAL_SIZE
+FROM raw_sales_data;
+
+select * from dim_products ; 
+
+create or replace table fact_sales as 
+select
+    r.ORDERNO,
+    r.ORDER_LINENO,
+    r.PRODUCT_CODE,
+    r.CUSTOMER_NAME,
+    r.ORDER_DATE,
+    r.STATUS,
+    r.QUANTITY_ORDER,
+    r.PRICE_EACH,
+    r.SALES
+FROM raw_sales_data r;
+
+select * from fact_sales ; 
+
+
+SELECT 
+    f.ORDERNO,
+    f.ORDER_LINENO,
+    f.PRODUCT_CODE,
+    p.PRODUCT_LINE,
+    p.MSRP,
+    f.CUSTOMER_NAME,
+    c.CITY,
+    c.COUNTRY,
+    f.ORDER_DATE,
+    d.YEAR_ID,
+    d.MONTH_ID,
+    d.QTR_ID,
+    f.STATUS,
+    f.QUANTITY_ORDER,
+    f.PRICE_EACH,
+    f.SALES,
+    p.DEAL_SIZE
+FROM fact_sales f
+JOIN dim_products p 
+    ON f.PRODUCT_CODE = p.PRODUCT_CODE
+JOIN dim_customer c 
+    ON f.CUSTOMER_NAME = c.CUSTOMER_NAME
+JOIN dim_date d 
+    ON f.ORDER_DATE = d.ORDER_DATE
+LIMIT 50;
+
